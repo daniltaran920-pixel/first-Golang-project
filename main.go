@@ -28,34 +28,42 @@ func main() {
 
 	desktopPath := filepath.Join(homeDir, "Desktop", "hello.txt")
 
-	file, err := os.Create(desktopPath)
+	file, err := os.OpenFile(desktopPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		log.Println("Ошибка при создание файла")
+		log.Println("Ошибка при открытие/создание файла")
 		return
 	}
-	err = file.Close()
-	if err != nil {
-		log.Println("Ошибка при закрытие файла: ", err)
-	}
+	defer file.Close()
 
-	fmt.Print("Введите текст: ")
+	fmt.Print("Программа готова к работе. Для выхода введите exit. \n")
+
 	scanner := bufio.NewScanner(os.Stdin)
 
+	fmt.Print("Введите текст: ")
+
+	for scanner.Scan() {
+		input := scanner.Text()
+		if input == "exit" {
+			log.Println("Пользователь решил выйти.")
+			break
+		}
+
+		if input == "" {
+			continue
+		}
+
+		log.Println("Пользователь ввел: ", input)
+
+		_, err = file.WriteString(input + "\n")
+		if err != nil {
+			log.Println("Ошибка при записи текста: ", err)
+			return
+		}
+
+		fmt.Print("Введите текст: ")
+	}
 	if err := scanner.Err(); err != nil {
 		log.Println("Ошика при чтении ввода: ", err)
-		return
-	}
-
-	var input string
-
-	if scanner.Scan() {
-		input = scanner.Text()
-		log.Println("Пользователь ввел: ", input)
-	}
-
-	_, err = file.WriteString(input)
-	if err != nil {
-		log.Println("Ошибка при написание текста")
 		return
 	}
 
